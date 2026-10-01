@@ -31,8 +31,19 @@ def test_evaluate_fixture_artifacts_and_data_quality(tmp_path: Path) -> None:
     written = {path.name for path in artifact_dir.iterdir() if path.is_file()}
     confusion = pd.read_csv(artifact_dir / "confusion_matrix.csv")
     test_report = pd.read_csv(artifact_dir / "classification_report.csv")
+    predictions = pd.read_csv(predictions_path)
+    cv_predictions = pd.read_csv(artifact_dir / "cv_predictions.csv")
     persisted_metrics = json.loads(
         (artifact_dir / "metrics.json").read_text(encoding="utf-8")
+    )
+    expected_labels = sorted(
+        set(predictions["true_label"])
+        | set(predictions["majority_prediction"])
+        | set(predictions["a_equivalent_prediction"])
+        | set(predictions["b_prediction"])
+        | set(cv_predictions["true_label"])
+        | set(cv_predictions["a_equivalent_prediction"])
+        | set(cv_predictions["b_prediction"])
     )
 
     assert {
@@ -53,7 +64,9 @@ def test_evaluate_fixture_artifacts_and_data_quality(tmp_path: Path) -> None:
         "b": 7,
         "majority": 7,
     }
+    assert test_report["support"].sum() == len(predictions) * 3
     assert persisted_metrics["data_quality"]["missing_baseColour"] == 1
+    assert persisted_metrics["labels"] == expected_labels
     assert (
         "historical repo a"
         in (artifact_dir / "comparison.md").read_text(encoding="utf-8").lower()
@@ -77,7 +90,89 @@ def test_evaluate_fixture_artifacts_and_data_quality(tmp_path: Path) -> None:
         "and its balanced accuracy was "
         f"{metric_direction(b_metrics['balanced_accuracy'], a_metrics['balanced_accuracy'])}."
     ) in comparison
-    assert metrics["labels"]
+    assert metrics["labels"] == expected_labels
+    test_delta = b_metrics["macro_f1"] - a_metrics["macro_f1"]
+    cv_delta = metrics["cv"]["mean_b_minus_a_macro_f1"]
+    if cv_delta > 0 and test_delta > 0:
+        expected_decision = "improvement supported by positive CV and fixed-test macro-F1 deltas"
+    elif cv_delta > 0 or test_delta > 0:
+        expected_decision = "inconclusive: CV and fixed-test macro-F1 deltas disagree"
+    else:
+        expected_decision = "no improvement observed: both macro-F1 deltas are non-positive"
+    assert metrics["decision"] == expected_decision
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize(
+    ("cv_rows", "prediction_rows", "expected_decision"),
+    [
+        (
+            [
+                {"row_id": 1, "fold": 1, "true_label": "Black", "a_equivalent_prediction": "Black", "b_prediction": "Black"},
+                {"row_id": 2, "fold": 1, "true_label": "Blue", "a_equivalent_prediction": "Black", "b_prediction": "Blue"},
+                {"row_id": 3, "fold": 2, "true_label": "Black", "a_equivalent_prediction": "Black", "b_prediction": "Black"},
+                {"row_id": 4, "fold": 2, "true_label": "Blue", "a_equivalent_prediction": "Black", "b_prediction": "Blue"},
+                {"row_id": 5, "fold": 3, "true_label": "Black", "a_equivalent_prediction": "Black", "b_prediction": "Black"},
+                {"row_id": 6, "fold": 3, "true_label": "Blue", "a_equivalent_prediction": "Black", "b_prediction": "Blue"},
+                {"row_id": 7, "fold": 4, "true_label": "Black", "a_equivalent_prediction": "Black", "b_prediction": "Black"},
+                {"row_id": 8, "fold": 4, "true_label": "Blue", "a_equivalent_prediction": "Black", "b_prediction": "Blue"},
+                {"row_id": 9, "fold": 5, "true_label": "Black", "a_equivalent_prediction": "Black", "b_prediction": "Black"},
+                {"row_id": 10, "fold": 5, "true_label": "Blue", "a_equivalent_prediction": "Black", "b_prediction": "Blue"},
+            ],
+            {
+                "row_id": [100, 101],
+                "true_label": ["Black", "Blue"],
+                "majority_prediction": ["Black", "Black"],
+                "a_equivalent_prediction": ["Black", "Black"],
+                "b_prediction": ["Black", "Blue"],
+            },
+            "improvement supported by positive CV and fixed-test macro-F1 deltas",
+        ),
+        (
+            [
+                {"row_id": 1, "fold": 1, "true_label": "Black", "a_equivalent_prediction": "Black", "b_prediction": "Black"},
+                {"row_id": 2, "fold": 1, "true_label": "Blue", "a_equivalent_prediction": "Blue", "b_prediction": "Black"},
+                {"row_id": 3, "fold": 2, "true_label": "Black", "a_equivalent_prediction": "Black", "b_prediction": "Black"},
+                {"row_id": 4, "fold": 2, "true_label": "Blue", "a_equivalent_prediction": "Blue", "b_prediction": "Black"},
+                {"row_id": 5, "fold": 3, "true_label": "Black", "a_equivalent_prediction": "Black", "b_prediction": "Black"},
+                {"row_id": 6, "fold": 3, "true_label": "Blue", "a_equivalent_prediction": "Blue", "b_prediction": "Black"},
+                {"row_id": 7, "fold": 4, "true_label": "Black", "a_equivalent_prediction": "Black", "b_prediction": "Black"},
+                {"row_id": 8, "fold": 4, "true_label": "Blue", "a_equivalent_prediction": "Blue", "b_prediction": "Black"},
+                {"row_id": 9, "fold": 5, "true_label": "Black", "a_equivalent_prediction": "Black", "b_prediction": "Black"},
+                {"row_id": 10, "fold": 5, "true_label": "Blue", "a_equivalent_prediction": "Blue", "b_prediction": "Black"},
+            ],
+            {
+                "row_id": [100, 101],
+                "true_label": ["Black", "Blue"],
+                "majority_prediction": ["Black", "Black"],
+                "a_equivalent_prediction": ["Black", "Blue"],
+                "b_prediction": ["Black", "Black"],
+            },
+            "no improvement observed: both macro-F1 deltas are non-positive",
+        ),
+    ],
+)
+def test_decision_policy_covers_all_outcomes(
+    tmp_path: Path,
+    cv_rows: list[dict[str, object]],
+    prediction_rows: dict[str, list[object]],
+    expected_decision: str,
+) -> None:
+    """Cover the improvement, no-improvement, and inconclusive outcomes."""
+    cv_path = tmp_path / "cv.csv"
+    predictions_path = tmp_path / "predictions.csv"
+    pd.DataFrame(cv_rows).to_csv(cv_path, index=False)
+    pd.DataFrame(prediction_rows).to_csv(predictions_path, index=False)
+
+    metrics = evaluate_predictions(predictions_path, cv_path, tmp_path / "artifacts")
+
+    if expected_decision in {
+        "improvement supported by positive CV and fixed-test macro-F1 deltas",
+        "no improvement observed: both macro-F1 deltas are non-positive",
+    }:
+        assert metrics["decision"] == expected_decision
+    else:
+        assert metrics["decision"].startswith("inconclusive")
 
 
 @pytest.mark.integration

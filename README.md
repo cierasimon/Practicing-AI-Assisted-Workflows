@@ -72,7 +72,9 @@ On the measured fixed-test comparison, B's accuracy is lower than the A-equivale
 
 These are human-run workflows against the repository's root `styles.csv`; they are separate from the fixture-based test suite. Run them from PowerShell in the repository root.
 
-### Stage 1: Setup
+### How to run
+
+#### Stage 1: Setup
 
 ```powershell
 make --version
@@ -80,32 +82,32 @@ make install
 make lint
 ```
 
-### Stage 2: Data
+#### Stage 2: Data
 
 ```powershell
 $env:FASHION_INPUT = 'styles.csv'
 make data
 ```
 
-### Stage 3: Split
+#### Stage 3: Split
 
 ```powershell
 make features
 ```
 
-### Stage 4: Train
+#### Stage 4: Train
 
 ```powershell
 make train
 ```
 
-### Stage 5: Evaluate
+#### Stage 5: Evaluate
 
 ```powershell
 make evaluate
 ```
 
-### Stage 6: End to end and cleanup
+#### Stage 6: End to end and cleanup
 
 ```powershell
 $env:FASHION_INPUT = 'styles.csv'
@@ -113,7 +115,7 @@ make run
 make clean
 ```
 
-Inspect `data/processed/` and `artifacts/` before cleanup. The full-data smoke test has not been run as part of this build.
+Inspect `data/processed/` and `artifacts/` before cleanup.
 
 ## Evidence and Handoff TODOs
 
@@ -123,3 +125,35 @@ Inspect `data/processed/` and `artifacts/` before cleanup. The full-data smoke t
 - **AI recommendation accepted:** TODO, record one recommendation and why it was accepted.
 - **AI recommendation rejected or changed:** TODO, record one recommendation and the decision made.
 - **Independent verification:** TODO, describe how the result was checked independently.
+
+## Manual smoke test
+
+Run on Windows (Git Bash, GNU Make) from a clean state with the root `styles.csv`:
+
+    make test lint run
+
+Result: PASS. 31 tests passed (4 expected rare-class stratification warnings, left visible by design); Ruff reported no issues; all four stages ran.
+
+| Check | Observed |
+| --- | --- |
+| Rows accepted / rejected | 44,424 / 22 |
+| Missing `baseColour` (excluded) | 15 |
+| Eligible rows | 44,409 |
+| Train / test (80/20, seed 42) | 35,527 / 8,882 |
+| Rarest colour in the training split | 3 members (flagged, not merged or dropped) |
+
+## Results: Repo A vs Repo B
+
+Note: B does not improve raw accuracy; it improves macro F1 and balanced accuracy, and improvement is claimed only when both the mean paired CV macro-F1 delta and the fixed-test macro-F1 delta are positive.
+
+Same eligible rows and the same fixed test split for all three models. Repo A's historical ~0.23 accuracy used a different missing-label treatment and is context only.
+
+| Model | Accuracy | Macro F1 | Weighted F1 | Balanced accuracy |
+| --- | --- | --- | --- | --- |
+| Majority baseline | 0.2212 | 0.0079 | 0.0802 | 0.0217 |
+| A-equivalent (gender + season) | 0.2307 | 0.0145 | 0.0986 | 0.0279 |
+| B (metadata + class weights) | 0.0976 | 0.0743 | 0.1039 | 0.2320 |
+
+Five-fold CV on the training split (macro F1, A-equivalent vs B): fold deltas 0.0670, 0.0537, 0.0684, 0.0701, 0.0558; mean 0.0630, sample SD 0.0076. B is ahead in all five folds. Fixed-test delta: +0.0598. Both are positive, so the pre-set rule supports an improvement claim.
+
+Interpretation: B is better at predicting less common colours (macro F1 and balanced accuracy up), but its overall accuracy is lower than both the A-equivalent and the majority baseline, so this is a trade-off rather than an across-the-board gain. Absolute scores remain low: gender, season, usage, article type and year carry limited signal about colour, and product names were excluded on purpose to avoid colour-word leakage.

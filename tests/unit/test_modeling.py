@@ -39,7 +39,7 @@ def test_pipeline_uses_imputation_unknown_safe_encoding_and_fixed_forest() -> No
 
 @pytest.mark.unit
 def test_pipeline_fits_nulls_and_predicts_unseen_categories() -> None:
-    """Impute training values and ignore categories first seen at prediction."""
+    """Impute training values and keep predictions within known training classes."""
     pipeline = build_pipeline(["gender", "year"])
     train = pd.DataFrame(
         {
@@ -54,6 +54,7 @@ def test_pipeline_fits_nulls_and_predicts_unseen_categories() -> None:
         pd.DataFrame({"gender": ["Unseen", None], "year": [None, 2015]})
     )
 
+    assert set(predictions).issubset(set(target))
     assert len(predictions) == 2
 
 

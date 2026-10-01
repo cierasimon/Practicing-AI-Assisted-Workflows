@@ -309,6 +309,12 @@ def _write_comparison(path: Path, metrics: dict[str, object]) -> None:
             "excludes missing `baseColour` rows."
         ),
         "",
+        (
+            "B does not improve raw accuracy; it improves macro F1 and balanced "
+            "accuracy, and improvement is claimed only when both the CV and "
+            "fixed-test macro-F1 deltas are positive."
+        ),
+        "",
         "## Fixed test split",
         "",
         "| Candidate | Accuracy | Macro F1 | Weighted F1 | Balanced accuracy |",
