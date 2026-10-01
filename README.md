@@ -157,3 +157,30 @@ Same eligible rows and the same fixed test split for all three models. Repo A's 
 Five-fold CV on the training split (macro F1, A-equivalent vs B): fold deltas 0.0670, 0.0537, 0.0684, 0.0701, 0.0558; mean 0.0630, sample SD 0.0076. B is ahead in all five folds. Fixed-test delta: +0.0598. Both are positive, so the pre-set rule supports an improvement claim.
 
 Interpretation: B is better at predicting less common colours (macro F1 and balanced accuracy up), but its overall accuracy is lower than both the A-equivalent and the majority baseline, so this is a trade-off rather than an across-the-board gain. Absolute scores remain low: gender, season, usage, article type and year carry limited signal about colour, and product names were excluded on purpose to avoid colour-word leakage.
+
+## Evaluation and reflection
+
+**Option selected:** Option 2, rebuilding my previous project (Repository A, a one-script fashion product colour classifier) from scratch with the Architect, Builder, and Tester workflow.
+
+**Purpose:** Predict a product's `baseColour` from `styles.csv` metadata using a modular, reproducible pipeline, and measure honestly whether it improves on Repo A. Install, run, and test instructions are in the sections above (`make install`, `make test`, `make lint`, `make run`, `make clean`).
+
+**Manual smoke test:** see "Manual smoke test" above. `make test lint run` passed on the real `styles.csv` (44,424 rows accepted, 22 rejected, 15 missing `baseColour`).
+
+### How each AI role contributed
+- **Architect** wrote `docs/plan.md`: assumptions, staged design, risks, smoke tests, and acceptance criteria. It recommended dropping `productDisplayName` to avoid colour-word leakage, and proposed class weights and macro F1 as the main metric.
+- **Builder** implemented the plan stage by stage with tests, and answered my review questions about warnings, leakage, and the Random Forest settings.
+- **Tester** reviewed the result against the plan. Its first report passed everything with no findings, so I asked for an adversarial second pass. That pass ran a real rare-class case, found a contradiction in the README, and found weak test assertions.
+
+### Recommendations I accepted, changed, or rejected
+- **Accepted:** the Architect's recommendation to exclude `productDisplayName` entirely rather than mask colour words, since masking is brittle.
+- **Accepted:** the Tester's recommendation to open the comparison report and README with a plain statement that B does not improve raw accuracy and is only called an improvement when both CV and test macro-F1 deltas are positive.
+- **Changed:** the Tester's recommendation to strengthen weak assertions. I told it not to hard-code exact Random Forest labels, and to assert stable properties instead (predictions within known classes, correct label sets, supports summing to the test size).
+- **Rejected:** the Tester's recommendation to add per-fold support counts. A-equivalent and B are scored on the same folds, so the paired delta is already fair, and the extra columns would change the plan's output schema without changing any conclusion.
+- **Corrected the Architect's plan:** I removed the PNG outputs, replaced `run_stage.py` with Makefile prerequisites, replaced `rm -rf` cleanup with a Python-based clean for Windows, and added five-fold cross-validation as a second piece of evidence, so improvement needs both a positive CV mean and a positive test delta.
+- **Corrected the Builder's work:** I had it pin minimum dependency versions and make the accuracy trade-off explicit in the report.
+
+### How I independently verified the result
+I re-ran `make test`, `make lint`, `make run`, and `make clean` myself after each stage. After the Tester's edits, all five fold deltas, the CV mean (0.0630), and the A-equivalent and B metrics were identical to my earlier run, and tests went from 31 to 33. I reviewed the git diff of the Tester's changes, and checked that `make clean` leaves `styles.csv`, source, and fixtures in place.
+
+### Limitations
+B has lower accuracy (0.098) than both the majority baseline (0.221) and the A-equivalent (0.231), but much higher macro F1 (0.074 vs 0.015) and balanced accuracy (0.232 vs 0.028). Absolute scores are low because gender, season, usage, article type, and year carry limited colour signal.
