@@ -1,0 +1,37 @@
+id,gender,masterCategory,subCategory,articleType,baseColour,season,year,usage,productDisplayName
+1001,Men,Apparel,Topwear,Shirts,Black,Fall,2011,Casual,Black shirt
+1002,Women,Apparel,Bottomwear,Jeans,Black,Summer,2012,Casual,Black jeans
+1003,Men,Footwear,Shoes,Sports Shoes,Black,Winter,2013,Sports,Black shoes
+1004,Women,Apparel,Topwear,Tshirts,Black,Spring,2014,Casual,Black tee
+1005,Men,Apparel,Topwear,Shirts,Black,Fall,2015,Formal,Black formal shirt
+1006,Women,Apparel,Bottomwear,Skirts,Black,Summer,2016,Casual,Black skirt
+1007,Men,Accessories,Bags,Backpacks,Black,Winter,2017,Travel,Black backpack
+1008,Women,Apparel,Topwear,Tshirts,Black,Spring,2018,Casual,Black tee two
+1009,Men,Apparel,Topwear,Shirts,Black,Fall,2011,Formal,Black shirt two
+1010,Women,Footwear,Shoes,Heels,Black,Summer,2012,Formal,Black heels
+1011,Men,Apparel,Bottomwear,Trousers,Black,Winter,2013,Casual,Black trousers
+1012,Women,Apparel,Topwear,Tops,Black,Spring,2014,Casual,Black top
+1013,Men,Apparel,Topwear,Shirts,Black,Fall,2015,Formal,Black shirt three
+1014,Women,Apparel,Bottomwear,Jeans,Black,Summer,2016,Casual,Black jeans two
+1015,Men,Footwear,Shoes,Sports Shoes,Black,Winter,2017,Sports,Black shoes two
+1016,Women,Apparel,Topwear,Tshirts,Black,Spring,2018,one-off-holdout-category,Black tee three
+1017,Men,Apparel,Topwear,Shirts,Black,Fall,2011,Formal,Black shirt four
+1018,Women,Apparel,Bottomwear,Skirts,Black,Summer,2012,Casual,Black skirt two
+1019,Men,Accessories,Bags,Backpacks,Black,Winter,2013,Travel,Black backpack two
+1020,Women,Apparel,Topwear,Tops,Black,Spring,2014,Casual,Black top two
+1021,Men,Apparel,Topwear,Shirts,Blue,Fall,2015,Casual,Blue shirt
+1022,Women,Apparel,Bottomwear,Jeans,Blue,Summer,,Casual,Blue jeans
+1023,Men,Footwear,Shoes,Sports Shoes,Blue,Winter,2017,Sports,Blue shoes
+1024,Women,Apparel,Topwear,Tshirts,Blue,Spring,2018,Casual,Blue tee
+1025,Men,Apparel,Topwear,Shirts,Blue,Fall,2011,Formal,Blue formal shirt
+1026,Women,Apparel,Bottomwear,Skirts,Blue,Summer,2012,Casual,Blue skirt
+1027,Men,Apparel,Topwear,Shirts,Green,Winter,2013,Casual,Green shirt
+1028,Women,Apparel,Topwear,Tshirts,Green,Spring,2014,Casual,Green tee
+1029,Men,Apparel,Bottomwear,Trousers,Green,Fall,2015,Casual,Green trousers
+1030,Women,Apparel,Topwear,Tops,Red,Summer,2016,Casual,Red top
+1031,Men,Footwear,Shoes,Sports Shoes,Red,Winter,2017,Sports,Red shoes
+1032,Women,Apparel,Topwear,Tops,,Spring,2018,,
+1033,Men,Apparel,Topwear,Shirts,Black,Fall,2015,Casual,Black hidden usage
+1034,Women,Apparel,Topwear,Tops,Black,Summer,,Casual,Black top missing year
+1035,Men,Apparel,Topwear,Shirts,Black,Winter,2017,Casual,
+1099,Men,Apparel,Topwear,Shirts,Black,Fall,2015,Casual,Malformed shirt,overflow-field
