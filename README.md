@@ -117,22 +117,13 @@ make clean
 
 Inspect `data/processed/` and `artifacts/` before cleanup.
 
-## Evidence and Handoff TODOs
+## Manual smoke test results
 
-- **Manual smoke test results:** TODO, to be completed by the human Tester after running the commands above.
-- **Measured Repo A vs Repo B results:** TODO, copy actual metrics with dataset, seed, and split details after the human-run smoke test. Do not infer results from the fixture.
-- **Architect, Builder, and Tester contributions:** TODO, describe each role's actual contribution.
-- **AI recommendation accepted:** TODO, record one recommendation and why it was accepted.
-- **AI recommendation rejected or changed:** TODO, record one recommendation and the decision made.
-- **Independent verification:** TODO, describe how the result was checked independently.
-
-## Manual smoke test
-
-Run on Windows (Git Bash, GNU Make) from a clean state with the root `styles.csv`:
+Run on Windows from Git Bash with GNU Make, using the root `styles.csv`:
 
     make test lint run
 
-Result: PASS. 31 tests passed (4 expected rare-class stratification warnings, left visible by design); Ruff reported no issues; all four stages ran.
+Result: PASS. 33 tests passed (4 expected rare-class stratification warnings, left visible by design; 31 tests before the Tester stage); Ruff reported no issues; all four stages ran. The PowerShell commands in "Manual Smoke Tests" above are the equivalent steps.
 
 | Check | Observed |
 | --- | --- |
@@ -164,7 +155,7 @@ Interpretation: B is better at predicting less common colours (macro F1 and bala
 
 **Purpose:** Predict a product's `baseColour` from `styles.csv` metadata using a modular, reproducible pipeline, and measure honestly whether it improves on Repo A. Install, run, and test instructions are in the sections above (`make install`, `make test`, `make lint`, `make run`, `make clean`).
 
-**Manual smoke test:** see "Manual smoke test" above. `make test lint run` passed on the real `styles.csv` (44,424 rows accepted, 22 rejected, 15 missing `baseColour`).
+**Manual smoke test:** see "Manual smoke test results" above. `make test lint run` passed on the real `styles.csv` (44,424 rows accepted, 22 rejected, 15 missing `baseColour`).
 
 ### How each AI role contributed
 - **Architect** wrote `docs/plan.md`: assumptions, staged design, risks, smoke tests, and acceptance criteria. It recommended dropping `productDisplayName` to avoid colour-word leakage, and proposed class weights and macro F1 as the main metric.
